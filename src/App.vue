@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive } from 'vue'
 import type { RGB } from './types/RGB'
 import { adaptiveLuminosity, oklchToRgb } from './shared/color-utils'
 import { match } from 'ts-pattern'
