@@ -152,7 +152,7 @@ export const adaptiveLuminosity = (
    t: number,
   maxLuminance: number = 100 // default to 100cd/m^2 which is sdr
 ) => {
-  const clampedLum = Math.max(30, Math.min(100, maxLuminance))
+  const clampedLum = Math.max(0.01, Math.min(10000, maxLuminance))
   const tInterp    = (clampedLum - 30) / 70
   const gamma      = 0.205 + tInterp * 0.015
 

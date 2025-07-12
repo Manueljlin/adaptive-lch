@@ -4,9 +4,6 @@ import type { RGB } from './types/RGB'
 import { adaptiveLuminosity, oklchToRgb } from './shared/color-utils'
 import { match } from 'ts-pattern'
 
-// fw16 is technically 500 but rtings measured it at this
-const currentDisplayMaxNits = ref(485)
-
 const supportsP3  = matchMedia('(color-gamut: p3)').matches
 const supportsHdr = matchMedia('(dynamic-range: high)').matches
 
@@ -159,13 +156,29 @@ const palette = computed(() =>
             adaptiveLchState.nits = 100
           }"
         >
-          reset
+          sdr
+        </button>
+        <button
+          class="px-2 py-1 bg-blue-500 rounded-full text-white"
+          @click="() => {
+            adaptiveLchState.nits = 485
+          }"
+        >
+          fw16
+        </button>
+        <button
+          class="px-2 py-1 bg-blue-500 rounded-full text-white"
+          @click="() => {
+            adaptiveLchState.nits = 1600
+          }"
+        >
+          14 pro
         </button>
       </span>
       <input
         type="range"
         min="0"
-        :max="currentDisplayMaxNits"
+        max="2000"
         step="1"
         v-model.number="adaptiveLchState.nits"
       />
