@@ -7,7 +7,9 @@ import { match } from 'ts-pattern'
 // fw16 is technically 500 but rtings measured it at this
 const currentDisplayMaxNits = ref(485)
 
-// const supportsP3 = matchMedia('(color-gamut: p3)').matches
+const supportsP3  = matchMedia('(color-gamut: p3)').matches
+const supportsHdr = matchMedia('(dynamic-range: high)').matches
+
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -111,6 +113,14 @@ const palette = computed(() =>
       *:shrink-0
     "
   >
+    <h1 class="text-4xl">
+      adaptive lch experiment
+    </h1>
+
+    <h2 class="text-2xl">
+      {{ supportsP3 ? 'p3 wide gamut' : 'srgb' }} -- {{ supportsHdr ? 'hdr' : 'sdr' }}
+    </h2>
+
     <!-- color preview -->
     <div class="size-64 rounded-full shadow"
       :style="{
