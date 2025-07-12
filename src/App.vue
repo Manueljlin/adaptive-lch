@@ -7,7 +7,7 @@ import { match } from 'ts-pattern'
 // fw16 is technically 500 but rtings measured it at this
 const currentDisplayMaxNits = ref(485)
 
-const supportsP3 = matchMedia('(color-gamut: p3)').matches
+// const supportsP3 = matchMedia('(color-gamut: p3)').matches
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
