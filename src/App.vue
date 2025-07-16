@@ -4,6 +4,7 @@ import type { RGB } from './types/RGB'
 import { adaptiveLuminosity, oklchToRgb } from './shared/color-utils'
 import { match } from 'ts-pattern'
 import { videoWorkaround } from './shared/hdr-white'
+import RangeSlider from './components/RangeSlider.vue'
 
 const supportsP3  = matchMedia('(color-gamut: p3)').matches
 const supportsHdr = matchMedia('(dynamic-range: high)').matches
@@ -21,6 +22,28 @@ const adaptiveLchState = reactive({
   chroma:    0,
   hue:       0
 })
+
+const alchInput = computed({
+  get: () =>
+    `alch(A${adaptiveLchState.nits} `
+    + `L${adaptiveLchState.lightness} `
+    + `C${adaptiveLchState.chroma} `
+    + `h${adaptiveLchState.hue})`,
+
+  set: (str: string) => {
+    // eugh
+    const match = str.match(/alch\(A(\d*\.?\d+)\s+L(\d*\.?\d+)\s+C(\d*\.?\d+)\s+h(\d*\.?\d+)\)/)
+    if (!match) return
+
+    const [, nits, lightness, chroma, hue] = match
+
+    adaptiveLchState.nits      = parseFloat(nits)
+    adaptiveLchState.lightness = parseFloat(lightness)
+    adaptiveLchState.chroma    = parseFloat(chroma)
+    adaptiveLchState.hue       = parseFloat(hue)
+  }
+})
+
 
 const currentColor = computed<RGB>(() => {
   const rgb = oklchToRgb({
@@ -150,7 +173,6 @@ const palette = computed(() =>
       "
     >
       <span class="flex justify-between items-center">
-        nits {{ adaptiveLchState.nits }}
         <button
           class="px-2 py-1 bg-blue-500 rounded-full text-white"
           @click="() => {
@@ -176,38 +198,47 @@ const palette = computed(() =>
           14 pro
         </button>
       </span>
+
       <input
-        type="range"
-        min="0"
-        max="2000"
-        step="1"
+        type="text"
+        v-model="alchInput"
+        class="
+          px-3 py-2 text-sm border border-slate-300 rounded-md
+          focus:outline-none
+          focus:border-blue-300
+          focus:ring-4 focus:ring-blue-500/30
+        "
+      />
+
+      <RangeSlider
+        label="Nits (kinda ass tone mapping)"
+        :min="0"
+        :max="2000"
+        :step="1"
         v-model.number="adaptiveLchState.nits"
       />
 
-      lightness {{ adaptiveLchState.lightness }}
-      <input
-        type="range"
-        min="0"
-        max="1"
-        step="0.001"
+      <RangeSlider
+        label="Lightness"
+        :min="0"
+        :max="1"
+        :step="0.001"
         v-model.number="adaptiveLchState.lightness"
       />
 
-      chroma {{ adaptiveLchState.chroma }}
-      <input
-        type="range"
-        min="0"
-        max="0.3"
-        step="0.001"
+      <RangeSlider
+        label="Chroma"
+        :min="0"
+        :max="0.3"
+        :step="0.001"
         v-model.number="adaptiveLchState.chroma"
       />
 
-      hue {{ adaptiveLchState.hue }}
-      <input
-        type="range"
-        min="0"
-        max="360"
-        step="1"
+      <RangeSlider
+        label="Hue"
+        :min="0"
+        :max="360"
+        :step="1"
         v-model.number="adaptiveLchState.hue"
       />
     </div>
