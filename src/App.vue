@@ -241,10 +241,11 @@ const palette = computed(() =>
 
 <template>
   <div
-    class="h-dvh w-dvw grid grid-cols-[350px_1fr] bg-slate-100"
+    class="h-dvh w-dvw grid md:grid-cols-[350px_1fr] bg-slate-100"
   >
     <!-- sidebar -->
     <ColorSidebar
+      class="hidden md:flex"
       :color-list-state="colorListState"
       :on-add-color="addColor"
       :on-delete-color="deleteColor"
@@ -303,14 +304,14 @@ const palette = computed(() =>
 
         <!-- sliders -->
         <Card class="flex flex-col gap-4 p-8">
-          <span class="flex justify-between items-center">
+          <span class="flex justify-start items-center gap-2">
             <button
               class="px-2 py-1 bg-blue-600 rounded-full text-white"
               @click="() => {
                 adaptiveLchState.nits = 100
               }"
             >
-              sdr
+              SDR
             </button>
             <button
               class="px-2 py-1 bg-blue-600 rounded-full text-white"
@@ -318,7 +319,7 @@ const palette = computed(() =>
                 adaptiveLchState.nits = 485
               }"
             >
-              fw16
+              Framework 16
             </button>
             <button
               class="px-2 py-1 bg-blue-600 rounded-full text-white"
@@ -326,11 +327,11 @@ const palette = computed(() =>
                 adaptiveLchState.nits = 1600
               }"
             >
-              14 pro
+              iPhone 14 Pro
             </button>
           </span>
 
-          <div class="flex *:flex-1 gap-2">
+          <div class="flex *:flex-1 flex-col sm:flex-row gap-2">
             <input
               type="text"
               v-model="alchInput"
