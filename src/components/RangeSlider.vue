@@ -8,6 +8,8 @@ const props = defineProps<{
   min:   number
   max:   number
   step:  number
+
+  bg?:   string
 }>()
 
 const inputValue = defineModel<number>({
@@ -69,8 +71,11 @@ const handleBlur = () => {
         :max
         :step
         v-model.number="inputValue"
+        :style="{
+          background: bg ?? ''
+        }"
         class="
-          flex-1 h-2 bg-slate-300 rounded-lg appearance-none cursor-pointer
+          flex-1 h-4 bg-slate-300 rounded-lg appearance-none cursor-pointer
         "
       />
 
@@ -92,3 +97,36 @@ const handleBlur = () => {
     </div>
   </div>
 </template>
+
+
+<style scoped>
+@reference "../style.css";
+
+input[type="range"]::-webkit-slider-thumb {
+  @apply
+    appearance-none
+
+    w-4 h-4 rounded-full
+
+    bg-transparent
+
+    border-2 border-white/50
+    outline outline-2 outline-black
+
+    cursor-pointer
+}
+
+input[type="range"]::-moz-range-thumb {
+  @apply
+    appearance-none
+
+    w-4 h-4 rounded-full
+
+    bg-transparent
+
+    border-2 border-white/50
+    outline outline-2 outline-black
+
+    cursor-pointer
+}
+</style>

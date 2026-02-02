@@ -81,6 +81,87 @@ const currentColor = computed<RGB>(() => {
 })
 
 
+const lightnessGradient = computed(() => {
+  const steps = 200
+  const colors = Array.from({ length: steps }, (_, i) => {
+    const t = i / (steps - 1)
+    const rgb = oklchToRgb({
+      L: adaptiveLuminosity(t, adaptiveLchState.nits),
+      C: adaptiveLchState.chroma,
+      h: adaptiveLchState.hue
+    })
+
+    if (rgb.inGamut) {
+      return `color(display-p3 ${rgb.r.toFixed(4)} ${rgb.g.toFixed(4)} ${rgb.b.toFixed(4)})`
+    }
+    return 'black'
+  })
+
+  return `linear-gradient(to right, ${colors.join(', ')})`
+})
+
+
+const chromaGradient = computed(() => {
+  const steps = 200
+  const colors = Array.from({ length: steps }, (_, i) => {
+    const t = i / (steps - 1)
+    const rgb = oklchToRgb({
+      L: adaptiveLuminosity(adaptiveLchState.lightness, adaptiveLchState.nits),
+      C: t * 0.3,
+      h: adaptiveLchState.hue
+    })
+
+    if (rgb.inGamut) {
+      return `color(display-p3 ${rgb.r.toFixed(4)} ${rgb.g.toFixed(4)} ${rgb.b.toFixed(4)})`
+    }
+    return 'black'
+  })
+
+  return `linear-gradient(to right, ${colors.join(', ')})`
+})
+
+
+const hueGradient = computed(() => {
+  const steps = 200
+  const colors = Array.from({ length: steps }, (_, i) => {
+    const t = i / (steps - 1)
+    const rgb = oklchToRgb({
+      L: adaptiveLuminosity(adaptiveLchState.lightness, adaptiveLchState.nits),
+      C: adaptiveLchState.chroma,
+      h: t * 360
+    })
+
+    if (rgb.inGamut) {
+      return `color(display-p3 ${rgb.r.toFixed(4)} ${rgb.g.toFixed(4)} ${rgb.b.toFixed(4)})`
+    }
+    return 'black'
+  })
+
+  return `linear-gradient(to right, ${colors.join(', ')})`
+})
+
+
+const nitsGradient = computed(() => {
+  const steps = 200
+  const colors = Array.from({ length: steps }, (_, i) => {
+    const t = i / (steps - 1)
+    const nitsValue = t * 2000
+    const rgb = oklchToRgb({
+      L: adaptiveLuminosity(adaptiveLchState.lightness, nitsValue),
+      C: adaptiveLchState.chroma,
+      h: adaptiveLchState.hue
+    })
+
+    if (rgb.inGamut) {
+      return `color(display-p3 ${rgb.r.toFixed(4)} ${rgb.g.toFixed(4)} ${rgb.b.toFixed(4)})`
+    }
+    return 'black'
+  })
+
+  return `linear-gradient(to right, ${colors.join(', ')})`
+})
+
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 
@@ -280,6 +361,7 @@ const palette = computed(() =>
             :max="2000"
             :step="1"
             v-model.number="adaptiveLchState.nits"
+            :bg="nitsGradient"
           />
 
           <RangeSlider
@@ -288,6 +370,7 @@ const palette = computed(() =>
             :max="1"
             :step="0.001"
             v-model.number="adaptiveLchState.lightness"
+            :bg="lightnessGradient"
           />
 
           <RangeSlider
@@ -296,6 +379,7 @@ const palette = computed(() =>
             :max="0.3"
             :step="0.001"
             v-model.number="adaptiveLchState.chroma"
+            :bg="chromaGradient"
           />
 
           <RangeSlider
@@ -304,6 +388,7 @@ const palette = computed(() =>
             :max="360"
             :step="1"
             v-model.number="adaptiveLchState.hue"
+            :bg="hueGradient"
           />
         </Card>
 

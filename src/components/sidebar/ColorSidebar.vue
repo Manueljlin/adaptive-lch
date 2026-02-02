@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { TransitionGroup } from 'vue'
 import ColorListItem from './ColorListItem.vue'
 import type { ColorListState } from '../../composables/useColorList'
 

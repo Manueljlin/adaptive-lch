@@ -67,14 +67,14 @@ const cancelEdit = () => {
 <template>
   <Card
     :class="[
-      'p-3 mb-2 cursor-pointer transition-colors hover:bg-slate-50 flex items-center gap-3 select-none',
+      'p-3 mb-2 cursor-pointer transition-colors hover:bg-slate-50 flex items-center gap-2 select-none',
       isSelected && 'bg-blue-100 ring-2 ring-blue-600'
     ]"
     @click="emit('select')"
   >
     <!-- color preview -->
     <div
-      class="size-12 rounded-full shrink-0 shadow-sm border-2 border-slate-300"
+      class="size-10 rounded-full shrink-0 shadow-sm"
       :style="{
         backgroundColor: `color(display-p3 ${colorPreview.r.toFixed(4)} ${colorPreview.g.toFixed(4)} ${colorPreview.b.toFixed(4)})`
       }"
@@ -121,14 +121,18 @@ const cancelEdit = () => {
         class="px-2 py-0.5 text-xs hover:bg-slate-500/20 rounded-full transition-colors"
         title="Move up"
       >
-        ⌃
+        <p class="translate-y-1">
+          ⌃
+        </p>
       </button>
       <button
         @click.stop="emit('moveDown')"
         class="px-2 py-0.5 text-xs hover:bg-slate-500/20 rounded-full transition-colors"
         title="Move down"
       >
-        ⌄
+        <p class="-translate-y-1">
+          ⌄
+        </p>
       </button>
     </div>
 
