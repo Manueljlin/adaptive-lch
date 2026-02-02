@@ -1,5 +1,8 @@
 <script setup lang="ts">
-defineProps<{
+import { ref, watch } from 'vue'
+
+
+const props = defineProps<{
   label: string
 
   min:   number
@@ -10,6 +13,46 @@ defineProps<{
 const inputValue = defineModel<number>({
   required: true
 })
+
+
+// keep internal value so that it doesn't kaboom
+const textInputValue = ref(String(inputValue.value))
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+
+// set new value
+watch(inputValue, (newValue) => {
+  if (isNaN(newValue) || !isFinite(newValue)) return
+  textInputValue.value = String(newValue)
+})
+
+
+// validate on input
+const handleTextInput = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const value = target.value
+
+  // we allow empty state while user inputs new value
+  if (value === '') {
+    textInputValue.value = ''
+    return
+  }
+
+  const numValue = parseFloat(value)
+  if (isNaN(numValue) || !isFinite(numValue)) return
+
+  inputValue.value = Math.max(props.min, Math.min(props.max, numValue))
+  textInputValue.value = value
+}
+
+
+// restore last valid value on blur if empty
+const handleBlur = () => {
+  if (textInputValue.value !== '') return
+  textInputValue.value = String(inputValue.value)
+}
 </script>
 
 
@@ -36,7 +79,9 @@ const inputValue = defineModel<number>({
         :min
         :max
         :step
-        v-model.number="inputValue"
+        :value="textInputValue"
+        @input="handleTextInput"
+        @blur="handleBlur"
         class="
           w-32 px-3 py-2 text-sm border border-slate-300 rounded-md
           focus:outline-none

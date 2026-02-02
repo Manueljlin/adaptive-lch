@@ -1,3 +1,4 @@
+import { match } from "ts-pattern"
 import type { Lab } from "../types/Lab"
 import type { LCh } from "../types/LCh"
 import type { RGB } from "../types/RGB"
@@ -156,5 +157,105 @@ export const adaptiveLuminosity = (
   const tInterp    = (clampedLum - 30) / 70
   const gamma      = 0.205 + tInterp * 0.015
 
+  // return 1 - Math.pow(1 - t, 0.125 / gamma)
   return Math.pow(t, 0.125 / gamma)
+}
+
+
+export const inverseAdaptiveLuminosity = (
+  L: number,
+  maxLuminance: number = 100
+) => {
+  const clampedLum = Math.max(0.01, Math.min(10000, maxLuminance))
+  const tInterp    = (clampedLum - 30) / 70
+  const gamma      = 0.205 + tInterp * 0.015
+
+  return Math.pow(L, gamma / 0.125)
+}
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~/
+
+
+/**
+ * convert rgb to hex color string
+ */
+export const rgbToHex = ({ r, g, b }: RGB): string => {
+  const toHex = (n: number) => {
+    const hex = Math.round(Math.max(0, Math.min(1, n)) * 255).toString(16)
+    return hex.padStart(2, '0')
+  }
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+
+/**
+ * convert hex color string to rgb
+ */
+export const hexToRgb = (hex: string): RGB | null => {
+  // nuke #
+  const cleaned = hex.replace(/^#/, '')
+
+  const [r, g, b] = match(cleaned.length)
+    .with(3, () => [
+      parseInt(cleaned[0] + cleaned[0], 16) / 255,
+      parseInt(cleaned[1] + cleaned[1], 16) / 255,
+      parseInt(cleaned[2] + cleaned[2], 16) / 255
+    ])
+    .with(6, () => [
+      parseInt(cleaned.substring(0, 2), 16) / 255,
+      parseInt(cleaned.substring(2, 4), 16) / 255,
+      parseInt(cleaned.substring(4, 6), 16) / 255
+    ])
+    .otherwise(() => [NaN, NaN, NaN])
+
+  if (isNaN(r) || isNaN(g) || isNaN(b))
+    return null
+
+  return { r, g, b }
+}
+
+
+/**
+ * convert rgb to oklab (inverse of oklabToRgb)
+ */
+export const rgbToOklab = ({ r, g, b }: RGB): Lab => {
+  // convert to linear RGB
+  const lr = srgbToLinear(r)
+  const lg = srgbToLinear(g)
+  const lb = srgbToLinear(b)
+
+  // linear rgb to lms color space
+  const l = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb
+  const m = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb
+  const s = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb
+
+  // apply cube root
+  const l_ = Math.cbrt(l)
+  const m_ = Math.cbrt(m)
+  const s_ = Math.cbrt(s)
+
+  // convert to OKLab
+  const L     = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
+  const a     = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
+  const bComp = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
+
+  return { L, a, b: bComp }
+}
+
+
+/**
+ * convert rgb to oklch
+ */
+export const rgbToOklch = (rgb: RGB): LCh => {
+  const { L, a, b } = rgbToOklab(rgb)
+
+  // rectangular to cylindrical coords
+  const C = Math.sqrt(a * a + b * b)
+  let   h = (Math.atan2(b, a) * 180) / Math.PI
+
+  // normalize hue to 0-360
+  if (h < 0) h += 360
+
+  return { L, C, h }
 }

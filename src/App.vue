@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
 import type { RGB } from './types/RGB'
-import { adaptiveLuminosity, oklchToRgb } from './shared/color-utils'
+import { adaptiveLuminosity, inverseAdaptiveLuminosity, oklchToRgb, rgbToHex, hexToRgb, rgbToOklch } from './shared/color-utils'
 import { match } from 'ts-pattern'
 import { videoWorkaround } from './shared/hdr-white'
 import RangeSlider from './components/RangeSlider.vue'
@@ -25,10 +25,10 @@ const adaptiveLchState = reactive({
 
 const alchInput = computed({
   get: () =>
-    `alch(A${adaptiveLchState.nits} `
-    + `L${adaptiveLchState.lightness} `
-    + `C${adaptiveLchState.chroma} `
-    + `h${adaptiveLchState.hue})`,
+    `alch(A${Number(adaptiveLchState.nits.toFixed(0))} `
+    + `L${Number(adaptiveLchState.lightness.toFixed(4))} `
+    + `C${Number(adaptiveLchState.chroma.toFixed(4))} `
+    + `h${Number(adaptiveLchState.hue.toFixed(2))})`,
 
   set: (str: string) => {
     // eugh
@@ -41,6 +41,21 @@ const alchInput = computed({
     adaptiveLchState.lightness = parseFloat(lightness)
     adaptiveLchState.chroma    = parseFloat(chroma)
     adaptiveLchState.hue       = parseFloat(hue)
+  }
+})
+
+const hexInput = computed({
+  get: () => rgbToHex(currentColor.value),
+
+  set: (str: string) => {
+    const rgb = hexToRgb(str)
+    if (!rgb) return
+
+    const oklch = rgbToOklch(rgb)
+
+    adaptiveLchState.lightness = inverseAdaptiveLuminosity(oklch.L, adaptiveLchState.nits)
+    adaptiveLchState.chroma    = oklch.C
+    adaptiveLchState.hue       = oklch.h
   }
 })
 
@@ -199,19 +214,33 @@ const palette = computed(() =>
         </button>
       </span>
 
-      <input
-        type="text"
-        v-model="alchInput"
-        class="
-          px-3 py-2 text-sm border border-slate-300 rounded-md
-          focus:outline-none
-          focus:border-blue-300
-          focus:ring-4 focus:ring-blue-500/30
-        "
-      />
+      <div class="flex *:flex-1 gap-2">
+        <input
+          type="text"
+          v-model="alchInput"
+          class="
+            px-3 py-2 text-sm border border-slate-300 rounded-md
+            focus:outline-none
+            focus:border-blue-300
+            focus:ring-4 focus:ring-blue-500/30
+          "
+        />
+
+        <input
+          type="text"
+          v-model="hexInput"
+          placeholder="#000000"
+          class="
+            px-3 py-2 text-sm font-mono border border-slate-300 rounded-md
+            focus:outline-none
+            focus:border-blue-300
+            focus:ring-4 focus:ring-blue-500/30
+          "
+        />
+      </div>
 
       <RangeSlider
-        label="Nits (kinda ass tone mapping)"
+        label="Expected nits in monitor"
         :min="0"
         :max="2000"
         :step="1"
