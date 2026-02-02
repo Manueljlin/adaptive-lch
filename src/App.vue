@@ -5,6 +5,9 @@ import { adaptiveLuminosity, inverseAdaptiveLuminosity, oklchToRgb, rgbToHex, he
 import { match } from 'ts-pattern'
 import { videoWorkaround } from './shared/hdr-white'
 import RangeSlider from './components/RangeSlider.vue'
+import ColorSidebar from './components/sidebar/ColorSidebar.vue'
+import Card from './components/Card.vue'
+import { useColorList } from './composables/useColorList'
 
 const supportsP3  = matchMedia('(color-gamut: p3)').matches
 const supportsHdr = matchMedia('(dynamic-range: high)').matches
@@ -90,6 +93,21 @@ const paletteState = reactive({
 })
 
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+
+const {
+  colorListState,
+  addColor,
+  deleteColor,
+  moveColorUp,
+  moveColorDown,
+  updateColorName
+} = useColorList(adaptiveLchState)
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
 
 const palette = computed(() =>
   Array.from({ length: paletteState.steps }, (_, i) => {
@@ -142,220 +160,236 @@ const palette = computed(() =>
 
 <template>
   <div
-    class="
-      bg-slate-200 h-dvh w-dvw overflow-auto
-      flex flex-col items-center gap-8
-      p-8
-      *:shrink-0
-    "
+    class="h-dvh w-dvw grid grid-cols-[350px_1fr] bg-slate-100"
   >
-    <h1 class="text-4xl">
-      adaptive lch experiment
-    </h1>
-
-    <h2 class="text-2xl">
-      {{ supportsP3 ? 'p3 wide gamut' : 'srgb' }} -- {{ supportsHdr ? 'hdr' : 'sdr' }}
-    </h2>
-
-    <!-- color preview -->
-    <div class="size-64 rounded-full shadow"
-      :style="{
-        'background-color': `
-          color(display-p3 ${currentColor.r.toFixed(4)} ${currentColor.g.toFixed(4)} ${currentColor.b.toFixed(4)})
-        `
-      }"
+    <!-- sidebar -->
+    <ColorSidebar
+      :color-list-state="colorListState"
+      :on-add-color="addColor"
+      :on-delete-color="deleteColor"
+      :on-move-color-up="moveColorUp"
+      :on-move-color-down="moveColorDown"
+      :on-update-color-name="updateColorName"
+      @update:selected-index="colorListState.selectedIndex = $event"
     />
 
 
-    <!-- color preview -->
-    <!-- <div class="size-64 rounded-full shadow"
-      :style="{
-        'background-color': `
-          rgb(
-            ${(currentColor.r * 100).toFixed(1)}%,
-            ${(currentColor.g * 100).toFixed(1)}%,
-            ${(currentColor.b * 100).toFixed(1)}%
-          )
-        `
-      }"
-    /> -->
-
-    <!-- sliders -->
-    <div
-      class="
-        bg-white shadow rounded-lg w-full h-fit
-        flex flex-col gap-4 p-8
-      "
-    >
-      <span class="flex justify-between items-center">
-        <button
-          class="px-2 py-1 bg-blue-500 rounded-full text-white"
-          @click="() => {
-            adaptiveLchState.nits = 100
-          }"
-        >
-          sdr
-        </button>
-        <button
-          class="px-2 py-1 bg-blue-500 rounded-full text-white"
-          @click="() => {
-            adaptiveLchState.nits = 485
-          }"
-        >
-          fw16
-        </button>
-        <button
-          class="px-2 py-1 bg-blue-500 rounded-full text-white"
-          @click="() => {
-            adaptiveLchState.nits = 1600
-          }"
-        >
-          14 pro
-        </button>
-      </span>
-
-      <div class="flex *:flex-1 gap-2">
-        <input
-          type="text"
-          v-model="alchInput"
-          class="
-            px-3 py-2 text-sm border border-slate-300 rounded-md
-            focus:outline-none
-            focus:border-blue-300
-            focus:ring-4 focus:ring-blue-500/30
-          "
-        />
-
-        <input
-          type="text"
-          v-model="hexInput"
-          placeholder="#000000"
-          class="
-            px-3 py-2 text-sm font-mono border border-slate-300 rounded-md
-            focus:outline-none
-            focus:border-blue-300
-            focus:ring-4 focus:ring-blue-500/30
-          "
-        />
-      </div>
-
-      <RangeSlider
-        label="Expected nits in monitor"
-        :min="0"
-        :max="2000"
-        :step="1"
-        v-model.number="adaptiveLchState.nits"
-      />
-
-      <RangeSlider
-        label="Lightness"
-        :min="0"
-        :max="1"
-        :step="0.001"
-        v-model.number="adaptiveLchState.lightness"
-      />
-
-      <RangeSlider
-        label="Chroma"
-        :min="0"
-        :max="0.3"
-        :step="0.001"
-        v-model.number="adaptiveLchState.chroma"
-      />
-
-      <RangeSlider
-        label="Hue"
-        :min="0"
-        :max="360"
-        :step="1"
-        v-model.number="adaptiveLchState.hue"
-      />
-    </div>
-
-
-
-    <!-- palette display -->
-    <div
-      class="
-        bg-white shadow rounded-lg w-full h-fit
-        flex flex-col gap-4 p-8
-      "
-    >
-      <input
-        type="range"
-        min="2"
-        max="200"
-        step="1"
-        v-model.number="paletteState.steps"
-      />
-      {{ paletteState.mode }}
-
-      <button
-        @click="() =>
-          paletteState.mode = 'lightness'
+    <!-- content -->
+    <main class="flex justify-center overflow-y-auto">
+      <div
+        class="
+          w-full max-w-4xl flex flex-col items-center gap-4 *:shrink-0
+          p-8
         "
       >
-        lightness
-      </button>
-      <button
-        @click="() =>
-          paletteState.mode = 'chroma'
-        "
-      >
-        chroma
-      </button>
-      <button
-        @click="() =>
-          paletteState.mode = 'hue'
-        "
-      >
-        hue
-      </button>
 
-      <!-- color strip without gaps -->
-      <div class="h-12 rounded overflow-hidden border flex w-full">
+        <!-- color preview -->
         <div
-          v-for="({ color }, index) in palette"
-          :key="index"
-          class="flex-1"
-          :style="{ backgroundColor: color }"
-        ></div>
-      </div>
-
-      <!-- individual swatches -->
-      <div class="flex flex-wrap gap-2">
-        <div
-          v-for="(item, i) in palette"
-          :key="i"
-          class="flex flex-col items-center"
+          class="
+            flex
+            *:flex *:items-end *:px-6 *:py-4
+            *:size-64 *:rounded-xl *:shadow
+            *:font-extrabold
+            gap-2
+          "
+          :class="adaptiveLchState.lightness < 0.5 ? 'text-white' : 'text-black'"
         >
           <div
-            class="size-16"
+            v-if="supportsP3"
             :style="{
-              backgroundColor: item.color
+              'background-color': `
+                color(display-p3 ${currentColor.r.toFixed(4)} ${currentColor.g.toFixed(4)} ${currentColor.b.toFixed(4)})
+              `
             }"
-            :title="
-              `L:${item.values.L.toFixed(3)}, `
-              + `C:${item.values.C.toFixed(3)}, `
-              + `h:${item.values.h.toFixed(1)}°`
-            "
-          />
-          <div class="text-xs text-center">
-            <span v-if="paletteState.mode === 'lightness'">
-              L:{{ item.values.L.toFixed(2) }}
-            </span>
-            <span v-else-if="paletteState.mode === 'chroma'">
-              C:{{ item.values.C.toFixed(2) }}
-            </span>
-            <span v-else>
-              {{ item.values.h.toFixed(0) }}°
-            </span>
+          >
+            <p>P3</p>
+          </div>
+          <div
+            :style="{
+              'background-color': `
+                rgb(
+                  ${(currentColor.r * 100).toFixed(1)}%,
+                  ${(currentColor.g * 100).toFixed(1)}%,
+                  ${(currentColor.b * 100).toFixed(1)}%
+                )
+              `
+            }"
+          >
+            <p>SDR</p>
           </div>
         </div>
+
+
+        <!-- sliders -->
+        <Card class="flex flex-col gap-4 p-8">
+          <span class="flex justify-between items-center">
+            <button
+              class="px-2 py-1 bg-blue-600 rounded-full text-white"
+              @click="() => {
+                adaptiveLchState.nits = 100
+              }"
+            >
+              sdr
+            </button>
+            <button
+              class="px-2 py-1 bg-blue-600 rounded-full text-white"
+              @click="() => {
+                adaptiveLchState.nits = 485
+              }"
+            >
+              fw16
+            </button>
+            <button
+              class="px-2 py-1 bg-blue-600 rounded-full text-white"
+              @click="() => {
+                adaptiveLchState.nits = 1600
+              }"
+            >
+              14 pro
+            </button>
+          </span>
+
+          <div class="flex *:flex-1 gap-2">
+            <input
+              type="text"
+              v-model="alchInput"
+              class="
+                px-3 py-2 text-sm border border-slate-300 rounded-md
+                focus:outline-none
+                focus:border-blue-300
+                focus:ring-4 focus:ring-blue-600/30
+              "
+            />
+
+            <input
+              type="text"
+              v-model="hexInput"
+              placeholder="#000000"
+              class="
+                px-3 py-2 text-sm font-mono border border-slate-300 rounded-md
+                focus:outline-none
+                focus:border-blue-300
+                focus:ring-4 focus:ring-blue-600/30
+              "
+            />
+          </div>
+
+          <RangeSlider
+            label="Expected nits in monitor"
+            :min="0"
+            :max="2000"
+            :step="1"
+            v-model.number="adaptiveLchState.nits"
+          />
+
+          <RangeSlider
+            label="Lightness"
+            :min="0"
+            :max="1"
+            :step="0.001"
+            v-model.number="adaptiveLchState.lightness"
+          />
+
+          <RangeSlider
+            label="Chroma"
+            :min="0"
+            :max="0.3"
+            :step="0.001"
+            v-model.number="adaptiveLchState.chroma"
+          />
+
+          <RangeSlider
+            label="Hue"
+            :min="0"
+            :max="360"
+            :step="1"
+            v-model.number="adaptiveLchState.hue"
+          />
+        </Card>
+
+
+
+        <!-- palette display -->
+        <Card class="flex flex-col gap-4 p-8">
+          <input
+            type="range"
+            min="2"
+            max="200"
+            step="1"
+            v-model.number="paletteState.steps"
+          />
+          {{ paletteState.mode }}
+
+          <button
+            @click="() =>
+              paletteState.mode = 'lightness'
+            "
+          >
+            lightness
+          </button>
+          <button
+            @click="() =>
+              paletteState.mode = 'chroma'
+            "
+          >
+            chroma
+          </button>
+          <button
+            @click="() =>
+              paletteState.mode = 'hue'
+            "
+          >
+            hue
+          </button>
+
+          <!-- color strip without gaps -->
+          <div class="h-12 rounded overflow-hidden border flex w-full">
+            <div
+              v-for="({ color }, index) in palette"
+              :key="index"
+              class="flex-1"
+              :style="{ backgroundColor: color }"
+            ></div>
+          </div>
+
+          <!-- individual swatches -->
+          <div class="flex flex-wrap gap-2">
+            <div
+              v-for="(item, i) in palette"
+              :key="i"
+              class="flex flex-col items-center"
+            >
+              <div
+                class="size-12"
+                :style="{
+                  backgroundColor: item.color
+                }"
+                :title="
+                  `L:${item.values.L.toFixed(3)}, `
+                  + `C:${item.values.C.toFixed(3)}, `
+                  + `h:${item.values.h.toFixed(1)}°`
+                "
+              />
+              <div class="text-xs text-center">
+                <span v-if="paletteState.mode === 'lightness'">
+                  L:{{ item.values.L.toFixed(2) }}
+                </span>
+                <span v-else-if="paletteState.mode === 'chroma'">
+                  C:{{ item.values.C.toFixed(2) }}
+                </span>
+                <span v-else>
+                  {{ item.values.h.toFixed(0) }}°
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-2xl">
+            {{ supportsP3 ? 'p3 wide gamut' : 'srgb' }} -- {{ supportsHdr ? 'hdr' : 'sdr' }}
+          </p>
+        </Card>
       </div>
-
-
-    </div>
+    </main>
   </div>
 
   <!-- force webkit into enabling HDR mode on mobile devices -->
